@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Kurssikokemukset</h1>
+
+<form method="get">
+  <label for="q">Haku</label>
+  <input id="q" name="q" value="{{ q|default('') }}">
+  <button type="submit">Hae</button>
+  <a href="{{ url_for('experience_list') }}">Tyhjennä</a>
+</form>
+
+<hr>
+
+{% for e in experiences %}
+  <article>
+    <h2>{{ e["course_name"] }}</h2>
+    <p><em>Lisännyt: {{ e["username"] }} | {{ e["created_at"] }}</em></p>
+    <p>{{ e["content"] }}</p>
+
+    {% if session.get("user_id") and session.get("user_id") == e["user_id"] %}
+      <a href="{{ url_for('experience_edit', experience_id=e['id']) }}">Muokkaa</a>
+      <form method="post"
+            action="{{ url_for('experience_delete', experience_id=e['id']) }}"
+            style="display:inline;">
+        <button type="submit">Poista</button>
+      </form>
+    {% endif %}
+  </article>
+  <hr>
+{% else %}
+  <p>Ei kokemuksia.</p>
+{% endfor %}
+
+{% endblock %}
+

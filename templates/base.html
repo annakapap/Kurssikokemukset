@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <title>Kurssikokemukset</title>
+</head>
+<body>
+  <nav>
+    <a href="{{ url_for('experience_list') }}">Kokemukset</a>
+    {% if session.get("user_id") %}
+      <span>Kirjautunut: {{ session.get("username") }}</span>
+      <a href="{{ url_for('experience_create') }}">Lisää kokemus</a>
+      <a href="{{ url_for('logout') }}">Kirjaudu ulos</a>
+    {% else %}
+      <a href="{{ url_for('login') }}">Kirjaudu</a>
+      <a href="{{ url_for('register') }}">Luo tunnus</a>
+    {% endif %}
+  </nav>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <ul>
+        {% for m in messages %}
+          <li>{{ m }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <hr>
+
+  {% block content %}{% endblock %}
+</body>
+</html>

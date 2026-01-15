@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+{% if mode == "create" %}
+  <h1>Lisää kurssikokemus</h1>
+{% else %}
+  <h1>Muokkaa kurssikokemusta</h1>
+{% endif %}
+
+<form method="post">
+  <label for="course_name">Kurssin nimi</label><br>
+  <input id="course_name" name="course_name" required
+         value="{{ exp['course_name'] if exp else '' }}"><br><br>
+
+  <label for="content">Kokemus</label><br>
+  <textarea id="content" name="content" rows="8" cols="60" required>{{ exp['content'] if exp else '' }}</textarea><br><br>
+
+  <button type="submit">Tallenna</button>
+</form>
+{% endblock %}

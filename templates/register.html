@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Luo tunnus</h1>
+<form method="post">
+  <label for="username">Käyttäjätunnus</label><br>
+  <input id="username" name="username" required><br><br>
+
+  <label for="password">Salasana</label><br>
+  <input id="password" name="password" type="password" required><br><br>
+
+  <button type="submit">Luo tunnus</button>
+</form>
+{% endblock %}
+
