@@ -1,6 +1,10 @@
-_pycache_/
+__pycache__/
 *.pyc
 venv/
-instance/app.sqlite3
 .env
+
+instance/
+*.sqlite
+*.sqlite3
+*.db
 
