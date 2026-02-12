@@ -1,7 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import get_db, close_db, init_db
+from users_repository import get_user_by_username
+from experiences_repository import list_experiences, get_experience_by_id
 import os
+from experiences_repository import (
+    list_experiences,
+    get_experience_by_id,
+    create_experience,
+    update_experience,
+    delete_experience,
+)
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret"  # vaihda myöhemmin
@@ -55,8 +64,8 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
-        db = get_db()
-        user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+        user = get_user_by_username(username)
+ 
 
         if user is None or not check_password_hash(user["password_hash"], password):
             flash("Väärä käyttäjätunnus tai salasana.")
@@ -78,29 +87,7 @@ def logout():
 @app.route("/experiences")
 def experience_list():
     q = request.args.get("q", "").strip()
-    db = get_db()
-
-    if q:
-        rows = db.execute(
-            """
-            SELECT e.*, u.username
-            FROM experiences e
-            JOIN users u ON u.id = e.user_id
-            WHERE e.course_name LIKE ? OR e.content LIKE ?
-            ORDER BY e.created_at DESC
-            """,
-            (f"%{q}%", f"%{q}%"),
-        ).fetchall()
-    else:
-        rows = db.execute(
-            """
-            SELECT e.*, u.username
-            FROM experiences e
-            JOIN users u ON u.id = e.user_id
-            ORDER BY e.created_at DESC
-            """
-        ).fetchall()
-
+    rows = list_experiences(q)
     return render_template("experience_list.html", experiences=rows, q=q)
 
 @app.route("/experiences/new", methods=["GET", "POST"])
@@ -115,12 +102,8 @@ def experience_create():
             flash("Kurssin nimi ja kokemus ovat pakollisia.")
             return render_template("experience_form.html", mode="create", exp=None)
 
-        db = get_db()
-        db.execute(
-            "INSERT INTO experiences (user_id, course_name, content) VALUES (?, ?, ?)",
-            (current_user_id(), course_name, content),
-        )
-        db.commit()
+        create_experience(current_user_id(), course_name, content)
+
         return redirect(url_for("experience_list"))
 
     return render_template("experience_form.html", mode="create", exp=None)
@@ -130,7 +113,8 @@ def experience_edit(experience_id):
     require_login()
     db = get_db()
 
-    exp = db.execute("SELECT * FROM experiences WHERE id = ?", (experience_id,)).fetchone()
+    exp = get_experience_by_id(experience_id)
+
     if exp is None:
         abort(404)
     if exp["user_id"] != current_user_id():
@@ -144,15 +128,8 @@ def experience_edit(experience_id):
             flash("Kurssin nimi ja kokemus ovat pakollisia.")
             return render_template("experience_form.html", mode="edit", exp=exp)
 
-        db.execute(
-            """
-            UPDATE experiences
-            SET course_name = ?, content = ?, updated_at = datetime('now')
-            WHERE id = ?
-            """,
-            (course_name, content, experience_id),
-        )
-        db.commit()
+        update_experience(experience_id, course_name, content)
+
         return redirect(url_for("experience_list"))
 
     return render_template("experience_form.html", mode="edit", exp=exp)
@@ -162,14 +139,17 @@ def experience_delete(experience_id):
     require_login()
     db = get_db()
 
-    exp = db.execute("SELECT * FROM experiences WHERE id = ?", (experience_id,)).fetchone()
+    exp = db.execute(
+    "SELECT id, user_id FROM experiences WHERE id = ?",
+    (experience_id,),
+).fetchone()
+
     if exp is None:
         abort(404)
     if exp["user_id"] != current_user_id():
         abort(403)
 
-    db.execute("DELETE FROM experiences WHERE id = ?", (experience_id,))
-    db.commit()
+    delete_experience(experience_id)
     return redirect(url_for("experience_list"))
 
 if __name__ == "__main__":
