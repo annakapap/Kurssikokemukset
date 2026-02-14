@@ -7,6 +7,9 @@
 <body>
   <nav>
     <a href="{{ url_for('experience_list') }}">Kokemukset</a>
+    {% if session.get("username") %}
+    <a href="{{ url_for('user_page', username=session.get("username")) }}">Oma sivu</a>
+{% endif %}
     {% if session.get("user_id") %}
       <span>Kirjautunut: {{ session.get("username") }}</span>
       <a href="{{ url_for('experience_create') }}">Lisää kokemus</a>

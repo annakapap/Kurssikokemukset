@@ -39,11 +39,16 @@ def get_experience_by_id(experience_id: int):
     ).fetchone()
 def create_experience(user_id: int, course_name: str, content: str):
     db = get_db()
-    db.execute(
-        "INSERT INTO experiences (user_id, course_name, content) VALUES (?, ?, ?)",
+    cur = db.execute(
+        """
+        INSERT INTO experiences (user_id, course_name, content)
+        VALUES (?, ?, ?)
+        """,
         (user_id, course_name, content),
     )
     db.commit()
+    return cur.lastrowid
+
 
 
 def update_experience(experience_id: int, course_name: str, content: str):
@@ -63,3 +68,15 @@ def delete_experience(experience_id: int):
     db = get_db()
     db.execute("DELETE FROM experiences WHERE id = ?", (experience_id,))
     db.commit()
+def get_experience_detail(experience_id: int):
+    db = get_db()
+    return db.execute(
+        """
+        SELECT e.id, e.user_id, e.course_name, e.content, e.created_at, e.updated_at,
+               u.username
+        FROM experiences e
+        JOIN users u ON u.id = e.user_id
+        WHERE e.id = ?
+        """,
+        (experience_id,),
+    ).fetchone()

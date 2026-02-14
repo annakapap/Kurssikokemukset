@@ -13,6 +13,23 @@
 
   <label for="content">Kokemus</label><br>
   <textarea id="content" name="content" rows="8" cols="60" required>{{ exp['content'] if exp else '' }}</textarea><br><br>
+<h3>Luokat</h3>
+
+{% if categories %}
+  {% for c in categories %}
+    <label>
+      <input
+        type="checkbox"
+        name="category_ids"
+        value="{{ c['id'] }}"
+        {% if c['id'] in selected_category_ids %}checked{% endif %}
+      >
+      {{ c['name'] }}
+    </label><br>
+  {% endfor %}
+{% else %}
+  <p>(Ei luokkia tietokannassa)</p>
+{% endif %}
 
   <button type="submit">Tallenna</button>
 </form>
