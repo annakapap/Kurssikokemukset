@@ -11,9 +11,13 @@ from experiences_repository import (
     update_experience,
     delete_experience,
 )
+from experiences_repository import get_experience_detail
+from comments_repository import list_comments, add_comment
+from categories_repository import list_categories, set_experience_categories, get_experience_categories
+
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "dev-secret"  # vaihda myöhemmin
+app.config["SECRET_KEY"] = "dev-secret"  # !!
 
 os.makedirs("instance", exist_ok=True)
 
@@ -57,7 +61,6 @@ def register():
         return redirect(url_for("login"))
 
     return render_template("register.html")
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -82,6 +85,44 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+@app.route("/users/<username>")
+def user_page(username):
+    db = get_db()
+
+    user = db.execute(
+        "SELECT id, username FROM users WHERE username = ?",
+        (username,),
+    ).fetchone()
+    if user is None:
+        abort(404)
+
+    experiences = db.execute(
+        """
+        SELECT id, course_name, created_at
+        FROM experiences
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        """,
+        (user["id"],),
+    ).fetchall()
+
+    total_experiences = db.execute(
+        "SELECT COUNT(*) AS n FROM experiences WHERE user_id = ?",
+        (user["id"],),
+    ).fetchone()["n"]
+
+    total_comments = db.execute(
+        "SELECT COUNT(*) AS n FROM comments WHERE user_id = ?",
+        (user["id"],),
+    ).fetchone()["n"]
+
+    return render_template(
+        "user_page.html",
+        profile_user=user,
+        experiences=experiences,
+        total_experiences=total_experiences,
+        total_comments=total_comments,
+    )
 
 # --- Experiences (CRUD + list + search) ---
 @app.route("/experiences")
@@ -91,6 +132,7 @@ def experience_list():
     return render_template("experience_list.html", experiences=rows, q=q)
 
 @app.route("/experiences/new", methods=["GET", "POST"])
+@app.route("/experiences/new", methods=["GET", "POST"])
 def experience_create():
     require_login()
 
@@ -98,20 +140,40 @@ def experience_create():
         course_name = request.form.get("course_name", "").strip()
         content = request.form.get("content", "").strip()
 
+        categories = list_categories()
+
         if not course_name or not content:
             flash("Kurssin nimi ja kokemus ovat pakollisia.")
-            return render_template("experience_form.html", mode="create", exp=None)
+            return render_template(
+                "experience_form.html",
+                mode="create",
+                exp=None,
+                categories=categories,
+                selected_category_ids=[]
+            )
 
-        create_experience(current_user_id(), course_name, content)
+        experience_id = create_experience(current_user_id(), course_name, content)
+
+        category_ids = request.form.getlist("category_ids")
+        category_ids = [int(x) for x in category_ids]
+        set_experience_categories(experience_id, category_ids)
 
         return redirect(url_for("experience_list"))
 
-    return render_template("experience_form.html", mode="create", exp=None)
+    categories = list_categories()
+    return render_template(
+        "experience_form.html",
+        mode="create",
+        exp=None,
+        categories=categories,
+        selected_category_ids=[]
+    )
+
+
 
 @app.route("/experiences/<int:experience_id>/edit", methods=["GET", "POST"])
 def experience_edit(experience_id):
     require_login()
-    db = get_db()
 
     exp = get_experience_by_id(experience_id)
 
@@ -126,13 +188,41 @@ def experience_edit(experience_id):
 
         if not course_name or not content:
             flash("Kurssin nimi ja kokemus ovat pakollisia.")
-            return render_template("experience_form.html", mode="edit", exp=exp)
+            categories = list_categories()
+            selected_category_ids = [
+                c["id"] for c in get_experience_categories(experience_id)
+            ]
+            return render_template(
+                "experience_form.html",
+                mode="edit",
+                exp=exp,
+                categories=categories,
+                selected_category_ids=selected_category_ids
+            )
 
         update_experience(experience_id, course_name, content)
 
+       
+        category_ids = request.form.getlist("category_ids")
+        category_ids = [int(x) for x in category_ids]
+        set_experience_categories(experience_id, category_ids)
+
         return redirect(url_for("experience_list"))
 
-    return render_template("experience_form.html", mode="edit", exp=exp)
+   
+    categories = list_categories()
+    selected_category_ids = [
+        c["id"] for c in get_experience_categories(experience_id)
+    ]
+
+    return render_template(
+        "experience_form.html",
+        mode="edit",
+        exp=exp,
+        categories=categories,
+        selected_category_ids=selected_category_ids
+    )
+
 
 @app.route("/experiences/<int:experience_id>/delete", methods=["POST"])
 def experience_delete(experience_id):
@@ -152,5 +242,45 @@ def experience_delete(experience_id):
     delete_experience(experience_id)
     return redirect(url_for("experience_list"))
 
-if __name__ == "__main__":
-    app.run(debug=True)
+@app.route("/experiences/<int:experience_id>")
+def experience_detail(experience_id):
+    exp = get_experience_detail(experience_id)
+    if exp is None:
+        abort(404)
+
+    comments = list_comments(experience_id)
+    categories = get_experience_categories(experience_id)
+
+    return render_template(
+        "experience_detail.html",
+        exp=exp,
+        comments=comments,
+        categories=categories,
+    )
+
+@app.route("/experiences/<int:experience_id>/comment")
+def comment_form(experience_id):
+    require_login()
+
+    exp = get_experience_detail(experience_id)
+    if exp is None:
+        abort(404)
+
+    return render_template("comment_form.html", exp=exp)
+
+@app.route("/experiences/<int:experience_id>/comments", methods=["POST"])
+def comment_create(experience_id):
+    require_login()
+
+    content = request.form.get("content", "").strip()
+    if not content:
+        flash("Kommentti ei voi olla tyhjä.")
+        return redirect(url_for("experience_detail", experience_id=experience_id))
+
+    exp = get_experience_detail(experience_id)
+    if exp is None:
+        abort(404)
+
+    add_comment(experience_id, current_user_id(), content)
+    return redirect(url_for("experience_detail", experience_id=experience_id))
+

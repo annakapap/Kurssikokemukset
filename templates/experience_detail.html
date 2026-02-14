@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>{{ exp.course_name }}</h1>
+
+<p>
+  Kirjoittaja:
+  <a href="{{ url_for('user_page', username=exp.username) }}">{{ exp.username }}</a>
+</p>
+
+<p>{{ exp.content }}</p>
+
+<hr>
+<p>
+  <strong>Luokat:</strong>
+  {% if categories and categories|length > 0 %}
+    {% for c in categories %}
+      {{ c["name"] }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  {% else %}
+    ei luokkia
+  {% endif %}
+</p>
+
+<h2>Kommentit</h2>
+
+{% if comments %}
+  <ul>
+    {% for c in comments %}
+      <li>
+        <strong>
+          <a href="{{ url_for('user_page', username=c.username) }}">{{ c.username }}</a>
+        </strong>
+        ({{ c.created_at }}):
+        {{ c.content }}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>Ei kommentteja vielä.</p>
+{% endif %}
+
+{% if session.get("user_id") %}
+  <h3>Lisää kommentti</h3>
+  <form method="post" action="{{ url_for('comment_create', experience_id=exp.id) }}">
+    <label for="content">Kommentti</label><br>
+    <textarea id="content" name="content" rows="4" cols="50"></textarea><br><br>
+    <button type="submit">Lähetä</button>
+  </form>
+{% else %}
+  <p><a href="{{ url_for('login') }}">Kirjaudu sisään</a> kommentoidaksesi.</p>
+{% endif %}
+
+{% endblock %}

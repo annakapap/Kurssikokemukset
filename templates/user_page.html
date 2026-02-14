@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Käyttäjä: {{ profile_user["username"] }}</h1>
+
+<h2>Tilastot</h2>
+<ul>
+  <li>Julkaisuja: {{ total_experiences }}</li>
+  <li>Kommentteja: {{ total_comments }}</li>
+</ul>
+
+<h2>Käyttäjän julkaisut</h2>
+{% if experiences and experiences|length > 0 %}
+  <ul>
+    {% for e in experiences %}
+      <li>
+        <a href="{{ url_for('experience_detail', experience_id=e["id"]) }}">
+          {{ e["course_name"] }}
+        </a>
+        ({{ e["created_at"] }})
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>Ei julkaisuja.</p>
+{% endif %}
+
+{% endblock %}
