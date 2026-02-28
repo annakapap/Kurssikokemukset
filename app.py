@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
+import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import get_db, close_db, init_db
 from users_repository import get_user_by_username
@@ -30,15 +31,32 @@ def current_user_id():
 def require_login():
     if current_user_id() is None:
         abort(403)
+def get_csrf_token():
+    """Return a CSRF token stored in session, creating one if needed."""
+    token = session.get("csrf_token")
+    if not token:
+        token = secrets.token_hex(16)
+        session["csrf_token"] = token
+    return token
 
+
+def require_csrf():
+    """Validate CSRF token for POST requests."""
+    form_token = request.form.get("csrf_token", "")
+    session_token = session.get("csrf_token", "")
+    if not form_token or not session_token or form_token != session_token:
+        abort(403)
+
+app.jinja_env.globals["csrf_token"] = get_csrf_token
 @app.route("/")
 def index():
     return redirect(url_for("experience_list"))
 
-# --- Auth ---
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        require_csrf()
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
@@ -64,6 +82,7 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        require_csrf()
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
@@ -124,7 +143,6 @@ def user_page(username):
         total_comments=total_comments,
     )
 
-# --- Experiences (CRUD + list + search) ---
 @app.route("/experiences")
 def experience_list():
     q = request.args.get("q", "").strip()
@@ -132,11 +150,11 @@ def experience_list():
     return render_template("experience_list.html", experiences=rows, q=q)
 
 @app.route("/experiences/new", methods=["GET", "POST"])
-@app.route("/experiences/new", methods=["GET", "POST"])
 def experience_create():
     require_login()
 
     if request.method == "POST":
+        require_csrf()
         course_name = request.form.get("course_name", "").strip()
         content = request.form.get("content", "").strip()
 
@@ -183,6 +201,7 @@ def experience_edit(experience_id):
         abort(403)
 
     if request.method == "POST":
+        require_csrf()
         course_name = request.form.get("course_name", "").strip()
         content = request.form.get("content", "").strip()
 
@@ -284,3 +303,5 @@ def comment_create(experience_id):
     add_comment(experience_id, current_user_id(), content)
     return redirect(url_for("experience_detail", experience_id=experience_id))
 
+if __name__ == "__main__":
+    app.run(debug=True)
