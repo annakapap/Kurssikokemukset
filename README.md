@@ -33,14 +33,14 @@ Avaa selaimessa
    http://127.0.0.1:5000/
 
 
-**## Testaus suurella datamäärällä**
+## Testaus suurella datamäärällä
 
 Sovelluksen toimintaa on testattu suurella tietomäärällä käyttäen seed.py -skripitiä. Testidatassa käyttäjiä oli 200, kurssikokemuksia 20000 ja kommentteja 50000, ja kokemusten sekä kommenttien sisältö koostui neutraaleista merkkijonoista.
 
 Tietokanta luotiin uudelleen ja data generoitiin komennolla python3 seed.py --users 200 --experiences 20000 --comments 50000, jonka jälkeen sovellus käynnistetiin komennolla flask run. Sivujen lataus pysyi nopeana suurella tietomäärällä, ja toisessa terminaalissa ajettu komento 
 
-time curl -s "http://127.0.0.1:5000/experiences?page=50" > /dev/null
-time curl -s "http://127.0.0.1:5000/experiences?q=12345&page=3" > /dev/null
+              time curl -s "http://127.0.0.1:5000/experiences?page=50" > /dev/null
+              time curl -s "http://127.0.0.1:5000/experiences?q=12345&page=3" > /dev/null
 
 tulosti
 
