@@ -246,6 +246,7 @@ def experience_edit(experience_id):
 @app.route("/experiences/<int:experience_id>/delete", methods=["POST"])
 def experience_delete(experience_id):
     require_login()
+    require_csrf()
     db = get_db()
 
     exp = db.execute(
