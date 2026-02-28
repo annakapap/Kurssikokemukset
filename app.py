@@ -13,14 +13,15 @@ from experiences_repository import (
     update_experience,
     delete_experience,
     list_experiences_by_user,
-    count_experiences_by_user
+    count_experiences_by_user,
+    count_experiences
 )
 from comments_repository import list_comments, add_comment, count_comments_by_user
 from categories_repository import list_categories, set_experience_categories, get_experience_categories
 from sqlite3 import IntegrityError
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "dev-secret"  # !!
+app.config["SECRET_KEY"] = "dev-secret"
 
 os.makedirs("instance", exist_ok=True)
 
@@ -123,8 +124,30 @@ def user_page(username):
 @app.route("/experiences")
 def experience_list():
     q = request.args.get("q", "").strip()
-    rows = list_experiences(q)
-    return render_template("experience_list.html", experiences=rows, q=q)
+
+    page_str = request.args.get("page", "1").strip()
+    try:
+        page = max(1, int(page_str))
+    except ValueError:
+        page = 1
+
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    total = count_experiences(q)
+    rows = list_experiences(q, per_page, offset)
+
+    has_prev = page > 1
+    has_next = offset + per_page < total
+
+    return render_template(
+        "experience_list.html",
+        experiences=rows,
+        q=q,
+        page=page,
+        has_prev=has_prev,
+        has_next=has_next,
+    )
 
 @app.route("/experiences/new", methods=["GET", "POST"])
 def experience_create():

@@ -1,31 +1,65 @@
 from db import get_db
 
-
-def list_experiences(search_query: str):
+def list_experiences(search_query: str, limit: int, offset: int):
     db = get_db()
 
+    search_query = (search_query or "").strip()
+
     if search_query:
+        like = f"%{search_query}%"
         return db.execute(
             """
-            SELECT e.id, e.user_id, e.course_name, e.content,
-                   e.created_at, e.updated_at, u.username
+            SELECT
+                e.id, e.user_id, e.course_name, e.content,
+                e.created_at, e.updated_at, u.username
             FROM experiences e
             JOIN users u ON u.id = e.user_id
-            WHERE e.course_name LIKE ? OR e.content LIKE ?
+            WHERE e.course_name LIKE ? OR e.content LIKE ? OR u.username LIKE ?
             ORDER BY e.created_at DESC
+            LIMIT ? OFFSET ?
             """,
-            (f"%{search_query}%", f"%{search_query}%"),
+            (like, like, like, limit, offset),
         ).fetchall()
 
     return db.execute(
         """
-        SELECT e.id, e.user_id, e.course_name, e.content,
-               e.created_at, e.updated_at, u.username
+        SELECT
+            e.id, e.user_id, e.course_name, e.content,
+            e.created_at, e.updated_at, u.username
         FROM experiences e
         JOIN users u ON u.id = e.user_id
         ORDER BY e.created_at DESC
-        """
+        LIMIT ? OFFSET ?
+        """,
+        (limit, offset),
     ).fetchall()
+
+def count_experiences(search_query: str) -> int:
+    db = get_db()
+
+    search_query = (search_query or "").strip()
+
+    if search_query:
+        like = f"%{search_query}%"
+        row = db.execute(
+            """
+            SELECT COUNT(*) AS n
+            FROM experiences e
+            JOIN users u ON u.id = e.user_id
+            WHERE e.course_name LIKE ? OR e.content LIKE ? OR u.username LIKE ?
+            """,
+            (like, like, like),
+        ).fetchone()
+        return int(row["n"])
+
+    row = db.execute(
+        """
+        SELECT COUNT(*) AS n
+        FROM experiences
+        """,
+    ).fetchone()
+    return int(row["n"])
+
 def get_experience_by_id(experience_id: int):
     db = get_db()
     return db.execute(

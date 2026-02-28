@@ -41,5 +41,16 @@
 
 {% endfor %}
 
+<div class="actions">
+  {% if has_prev %}
+    <a class="pill" href="{{ url_for('experience_list', q=q, page=page-1) }}">Edellinen</a>
+  {% endif %}
+
+  <span class="meta">Sivu {{ page }}</span>
+
+  {% if has_next %}
+    <a class="pill" href="{{ url_for('experience_list', q=q, page=page+1) }}">Seuraava</a>
+  {% endif %}
+</div>
 {% endblock %}
 
