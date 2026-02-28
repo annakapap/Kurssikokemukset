@@ -30,6 +30,7 @@
     {% if session.get("user_id") and session.get("user_id") == e["user_id"] %}
       <a href="{{ url_for('experience_edit', experience_id=e['id']) }}">Muokkaa</a>
       <form method="post"
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             action="{{ url_for('experience_delete', experience_id=e['id']) }}"
             style="display:inline;">
         <button type="submit">Poista</button>
