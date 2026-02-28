@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import get_db, close_db, init_db
-from users_repository import get_user_by_username
+from users_repository import get_user_by_username, create_user
 import os
 from experiences_repository import (
     list_experiences,
@@ -12,10 +12,12 @@ from experiences_repository import (
     create_experience,
     update_experience,
     delete_experience,
+    list_experiences_by_user,
+    count_experiences_by_user
 )
-from comments_repository import list_comments, add_comment
+from comments_repository import list_comments, add_comment, count_comments_by_user
 from categories_repository import list_categories, set_experience_categories, get_experience_categories
-
+from sqlite3 import IntegrityError
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret"  # !!
@@ -64,16 +66,11 @@ def register():
             flash("Käyttäjätunnus ja salasana ovat pakollisia.")
             return render_template("register.html")
 
-        db = get_db()
         try:
-            db.execute(
-                "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-                (username, generate_password_hash(password)),
-            )
-            db.commit()
-        except Exception:
-            flash("Käyttäjätunnus on jo käytössä.")
-            return render_template("register.html")
+           create_user(username, generate_password_hash(password))
+        except IntegrityError:
+           flash("Käyttäjätunnus on jo käytössä.")
+           return render_template("register.html")
 
         flash("Tunnus luotu. Kirjaudu sisään.")
         return redirect(url_for("login"))
@@ -104,36 +101,16 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
 @app.route("/users/<username>")
 def user_page(username):
-    db = get_db()
-
-    user = db.execute(
-        "SELECT id, username FROM users WHERE username = ?",
-        (username,),
-    ).fetchone()
+    user = get_user_by_username(username)
     if user is None:
         abort(404)
 
-    experiences = db.execute(
-        """
-        SELECT id, course_name, created_at
-        FROM experiences
-        WHERE user_id = ?
-        ORDER BY created_at DESC
-        """,
-        (user["id"],),
-    ).fetchall()
-
-    total_experiences = db.execute(
-        "SELECT COUNT(*) AS n FROM experiences WHERE user_id = ?",
-        (user["id"],),
-    ).fetchone()["n"]
-
-    total_comments = db.execute(
-        "SELECT COUNT(*) AS n FROM comments WHERE user_id = ?",
-        (user["id"],),
-    ).fetchone()["n"]
+    experiences = list_experiences_by_user(user["id"])
+    total_experiences = count_experiences_by_user(user["id"])
+    total_comments = count_comments_by_user(user["id"])
 
     return render_template(
         "user_page.html",
