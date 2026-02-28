@@ -6,6 +6,7 @@
 <h2>{{ exp.course_name if exp.course_name is defined else exp["course_name"] }}</h2>
 
 <form method="post" action="{{ url_for('comment_create', experience_id=exp["id"]) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <label for="content">Kommentti</label><br>
   <textarea id="content" name="content" rows="5" cols="60"></textarea><br><br>
   <button type="submit">Lähetä</button>

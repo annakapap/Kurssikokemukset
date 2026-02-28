@@ -7,6 +7,7 @@
 {% endif %}
 
 <form method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <label for="course_name">Kurssin nimi</label><br>
   <input id="course_name" name="course_name" required
          value="{{ exp['course_name'] if exp else '' }}"><br><br>
@@ -31,6 +32,8 @@
   <p>(Ei luokkia tietokannassa)</p>
 {% endif %}
 
-  <button type="submit">Tallenna</button>
+<div style="margin-top: 18px;">
+  <button type="submit" class="btn-ghost">Tallenna</button>
+</div>
 </form>
 {% endblock %}

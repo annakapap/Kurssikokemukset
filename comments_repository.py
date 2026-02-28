@@ -23,3 +23,10 @@ def add_comment(experience_id: int, user_id: int, content: str):
     )
     db.commit()
 
+def count_comments_by_user(user_id: int) -> int:
+    db = get_db()
+    row = db.execute(
+        "SELECT COUNT(*) AS n FROM comments WHERE user_id = ?",
+        (user_id,),
+    ).fetchone()
+    return int(row["n"])
