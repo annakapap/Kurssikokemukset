@@ -42,3 +42,22 @@ CREATE TABLE comments (
     FOREIGN KEY (experience_id) REFERENCES experiences(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+
+CREATE INDEX IF NOT EXISTS idx_experiences_created_at
+    ON experiences (created_at);
+
+CREATE INDEX IF NOT EXISTS idx_experiences_user_id
+    ON experiences (user_id);
+
+CREATE INDEX IF NOT EXISTS idx_comments_experience_id
+    ON comments (experience_id);
+
+CREATE INDEX IF NOT EXISTS idx_comments_user_id
+    ON comments (user_id);
+
+CREATE INDEX IF NOT EXISTS idx_experience_categories_experience_id
+    ON experience_categories (experience_id);
+
+CREATE INDEX IF NOT EXISTS idx_experience_categories_category_id
+    ON experience_categories (category_id);
