@@ -2,6 +2,7 @@
 {% block content %}
 <h1>Kirjautuminen</h1>
 <form method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <label for="username">Käyttäjätunnus</label><br>
   <input id="username" name="username" required><br><br>
 

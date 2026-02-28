@@ -87,3 +87,24 @@ def get_experience_owner(experience_id: int):
         "SELECT id, user_id FROM experiences WHERE id = ?",
         (experience_id,),
     ).fetchone()
+
+def list_experiences_by_user(user_id: int):
+    db = get_db()
+    return db.execute(
+        """
+        SELECT id, course_name, created_at
+        FROM experiences
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        """,
+        (user_id,),
+    ).fetchall()
+
+
+def count_experiences_by_user(user_id: int) -> int:
+    db = get_db()
+    row = db.execute(
+        "SELECT COUNT(*) AS n FROM experiences WHERE user_id = ?",
+        (user_id,),
+    ).fetchone()
+    return int(row["n"])

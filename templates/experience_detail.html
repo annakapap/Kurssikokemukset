@@ -1,26 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1>{{ exp.course_name }}</h1>
+<div class="card">
 
-<p>
-  Kirjoittaja:
-  <a href="{{ url_for('user_page', username=exp.username) }}">{{ exp.username }}</a>
-</p>
+  <h1>{{ exp.course_name }}</h1>
 
-<p>{{ exp.content }}</p>
+  <p class="meta">
+    Kirjoittaja:
+    <a href="{{ url_for('user_page', username=exp.username) }}">
+      {{ exp.username }}
+    </a>
+  </p>
 
-<hr>
-<p>
-  <strong>Luokat:</strong>
-  {% if categories and categories|length > 0 %}
-    {% for c in categories %}
-      {{ c["name"] }}{% if not loop.last %}, {% endif %}
-    {% endfor %}
-  {% else %}
-    ei luokkia
-  {% endif %}
-</p>
+  <p class="user-text">{{ exp.content }}</p>
+
+  <hr>
+
+  <p>
+    <strong>Luokat:</strong>
+    {% if categories and categories|length > 0 %}
+      {% for c in categories %}
+        {{ c["name"] }}{% if not loop.last %}, {% endif %}
+      {% endfor %}
+    {% else %}
+      ei luokkia
+    {% endif %}
+  </p>
+
+</div>
 
 <h2>Kommentit</h2>
 
@@ -32,7 +39,7 @@
           <a href="{{ url_for('user_page', username=c.username) }}">{{ c.username }}</a>
         </strong>
         ({{ c.created_at }}):
-        {{ c.content }}
+        <span class="user-text">{{ c.content }}</span>
       </li>
     {% endfor %}
   </ul>

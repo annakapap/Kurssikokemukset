@@ -2,36 +2,40 @@
 <html lang="fi">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kurssikokemukset</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <nav>
-    <a href="{{ url_for('experience_list') }}">Kokemukset</a>
-    {% if session.get("username") %}
-    <a href="{{ url_for('user_page', username=session.get("username")) }}">Oma sivu</a>
-{% endif %}
-    {% if session.get("user_id") %}
-      <span>Kirjautunut: {{ session.get("username") }}</span>
-      <a href="{{ url_for('experience_create') }}">Lisää kokemus</a>
-      <a href="{{ url_for('logout') }}">Kirjaudu ulos</a>
-    {% else %}
-      <a href="{{ url_for('login') }}">Kirjaudu</a>
-      <a href="{{ url_for('register') }}">Luo tunnus</a>
-    {% endif %}
+    <div class="nav-inner">
+      <a class="brand" href="{{ url_for('experience_list') }}">KURSSIKOKEMUKSET</a>
+
+      <div class="nav-links">
+        <a class="pill" href="{{ url_for('experience_list') }}">Kokemukset</a>
+        {% if session.get("user_id") %}
+          <a class="pill" href="{{ url_for('experience_create') }}">Lisää uusi kokemus</a>
+          <a class="pill" href="{{ url_for('logout') }}">Kirjaudu ulos</a>
+        {% else %}
+          <a class="pill" href="{{ url_for('login') }}">Kirjaudu sisään</a>
+          <a class="pill" href="{{ url_for('register') }}">Rekisteröidy</a>
+        {% endif %}
+      </div>
+    </div>
   </nav>
 
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <ul>
-        {% for m in messages %}
-          <li>{{ m }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-  {% endwith %}
+  <main class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash">
+          {% for m in messages %}
+            <div>{{ m }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-  <hr>
-
-  {% block content %}{% endblock %}
+    {% block content %}{% endblock %}
+  </main>
 </body>
 </html>
