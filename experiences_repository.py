@@ -80,3 +80,10 @@ def get_experience_detail(experience_id: int):
         """,
         (experience_id,),
     ).fetchone()
+
+def get_experience_owner(experience_id: int):
+    db = get_db()
+    return db.execute(
+        "SELECT id, user_id FROM experiences WHERE id = ?",
+        (experience_id,),
+    ).fetchone()
