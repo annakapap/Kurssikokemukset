@@ -290,6 +290,7 @@ def comment_form(experience_id):
 @app.route("/experiences/<int:experience_id>/comments", methods=["POST"])
 def comment_create(experience_id):
     require_login()
+    require_csrf()
 
     content = request.form.get("content", "").strip()
     if not content:
