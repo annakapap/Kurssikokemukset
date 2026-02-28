@@ -3,16 +3,16 @@ import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import get_db, close_db, init_db
 from users_repository import get_user_by_username
-from experiences_repository import list_experiences, get_experience_by_id
 import os
 from experiences_repository import (
     list_experiences,
     get_experience_by_id,
+    get_experience_detail,
+    get_experience_owner,
     create_experience,
     update_experience,
     delete_experience,
 )
-from experiences_repository import get_experience_detail
 from comments_repository import list_comments, add_comment
 from categories_repository import list_categories, set_experience_categories, get_experience_categories
 
@@ -247,13 +247,8 @@ def experience_edit(experience_id):
 def experience_delete(experience_id):
     require_login()
     require_csrf()
-    db = get_db()
 
-    exp = db.execute(
-    "SELECT id, user_id FROM experiences WHERE id = ?",
-    (experience_id,),
-).fetchone()
-
+    exp = get_experience_owner(experience_id)
     if exp is None:
         abort(404)
     if exp["user_id"] != current_user_id():
