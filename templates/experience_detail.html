@@ -43,6 +43,11 @@
 {% if session.get("user_id") %}
   <h3>Lisää kommentti</h3>
   <form method="post" action="{{ url_for('comment_create', experience_id=exp.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> 
+  <form method="post" action="...">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  ...
+</form>
     <label for="content">Kommentti</label><br>
     <textarea id="content" name="content" rows="4" cols="50"></textarea><br><br>
     <button type="submit">Lähetä</button>
