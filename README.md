@@ -8,7 +8,7 @@ Kurssikokemuksia keräävä alusta.
 - Käyttäjä pystyy etsimään ilmoituksia hakusanalla.
 - Sovelluksessa on käyttäjäsivut, jotka näyttävät tilastoja ja käyttäjän lisäämät ilmoitukset.
 - Käyttäjä pystyy valitsemaan ilmoitukselle yhden tai useamman luokittelun (esim. tiedekunta, aine, taso).
-- Käyttäjä pystyy lisäämään lisähuomioita/täsmennyksiä omiin ja muiden käyttäjien ilmoituksiin.
+- Käyttäjä pystyy lisäämään kommentteja omiin ja muiden käyttäjien ilmoituksiin.
 
 
 ## Käynnistysohjeet
