@@ -1,24 +1,28 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
-import secrets
-from werkzeug.security import generate_password_hash, check_password_hash
-from db import get_db, close_db, init_db
-from users_repository import get_user_by_username, create_user
+"""Application module."""
+
 import os
+import secrets
+from sqlite3 import IntegrityError
+
+from flask import Flask, abort, flash, redirect, render_template, request, session, url_for
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from db import close_db, init_db
+from categories_repository import get_experience_categories, list_categories, set_experience_categories
+from comments_repository import add_comment, list_comments
 from experiences_repository import (
-    list_experiences,
+    count_experiences,
+    count_experiences_by_user,
+    create_experience,
+    delete_experience,
     get_experience_by_id,
     get_experience_detail,
-    get_experience_owner,
-    create_experience,
-    update_experience,
-    delete_experience,
+    list_experiences,
     list_experiences_by_user,
-    count_experiences_by_user,
-    count_experiences
+    update_experience,
 )
-from comments_repository import list_comments, add_comment, count_comments_by_user
-from categories_repository import list_categories, set_experience_categories, get_experience_categories
-from sqlite3 import IntegrityError
+from users_repository import create_user, get_user_by_username
+from users_repository import count_comments_by_user
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret"
@@ -68,10 +72,10 @@ def register():
             return render_template("register.html")
 
         try:
-           create_user(username, generate_password_hash(password))
+            create_user(username, generate_password_hash(password))
         except IntegrityError:
-           flash("Käyttäjätunnus on jo käytössä.")
-           return render_template("register.html")
+            flash("Käyttäjätunnus on jo käytössä.")
+        return render_template("register.html")
 
         flash("Tunnus luotu. Kirjaudu sisään.")
         return redirect(url_for("login"))

@@ -1,3 +1,5 @@
+"""Application module."""
+
 from db import get_db
 from sqlite3 import IntegrityError
 
