@@ -22,7 +22,7 @@ from experiences_repository import (
     update_experience,
 )
 from users_repository import create_user, get_user_by_username
-from users_repository import count_comments_by_user
+from comments_repository import count_comments_by_user
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret"
@@ -252,7 +252,7 @@ def experience_delete(experience_id):
     require_login()
     require_csrf()
 
-    exp = get_experience_owner(experience_id)
+    exp = get_experience_by_id(experience_id)
     if exp is None:
         abort(404)
     if exp["user_id"] != current_user_id():
