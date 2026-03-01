@@ -1,6 +1,8 @@
+"""Database operations related to experiences."""
 from db import get_db
 
 def list_experiences(search_query: str, limit: int, offset: int):
+    """Return a paginated list of experiences with optional filtering."""
     db = get_db()
 
     search_query = (search_query or "").strip()
@@ -35,6 +37,7 @@ def list_experiences(search_query: str, limit: int, offset: int):
     ).fetchall()
 
 def count_experiences(search_query: str) -> int:
+    """Return the total number of experiences matching the optional search query."""
     db = get_db()
 
     search_query = (search_query or "").strip()
@@ -61,6 +64,7 @@ def count_experiences(search_query: str) -> int:
     return int(row["n"])
 
 def get_experience_by_id(experience_id: int):
+    """Return a single experience by its ID."""
     db = get_db()
     return db.execute(
         """
@@ -71,7 +75,9 @@ def get_experience_by_id(experience_id: int):
         """,
         (experience_id,),
     ).fetchone()
+
 def create_experience(user_id: int, course_name: str, content: str):
+    """Insert a new experience into the database."""
     db = get_db()
     cur = db.execute(
         """
@@ -86,6 +92,7 @@ def create_experience(user_id: int, course_name: str, content: str):
 
 
 def update_experience(experience_id: int, course_name: str, content: str):
+    """Update an existing experience."""
     db = get_db()
     db.execute(
         """
@@ -99,10 +106,13 @@ def update_experience(experience_id: int, course_name: str, content: str):
 
 
 def delete_experience(experience_id: int):
+    """Delete an experience by ID."""
     db = get_db()
     db.execute("DELETE FROM experiences WHERE id = ?", (experience_id,))
     db.commit()
+
 def get_experience_detail(experience_id: int):
+    """Return detailed information about a specific experience."""
     db = get_db()
     return db.execute(
         """
@@ -116,6 +126,7 @@ def get_experience_detail(experience_id: int):
     ).fetchone()
 
 def get_experience_owner(experience_id: int):
+    """Return the ID and owner of a specific experience."""
     db = get_db()
     return db.execute(
         "SELECT id, user_id FROM experiences WHERE id = ?",
@@ -123,6 +134,7 @@ def get_experience_owner(experience_id: int):
     ).fetchone()
 
 def list_experiences_by_user(user_id: int):
+    """Return all experiences created by a specific user."""
     db = get_db()
     return db.execute(
         """
@@ -136,6 +148,7 @@ def list_experiences_by_user(user_id: int):
 
 
 def count_experiences_by_user(user_id: int) -> int:
+    """Return the number of experiences created by a specific user."""
     db = get_db()
     row = db.execute(
         "SELECT COUNT(*) AS n FROM experiences WHERE user_id = ?",

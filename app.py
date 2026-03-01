@@ -1,15 +1,33 @@
-"""Application module."""
+"""Main Flask application for the course experiences app."""
 
 import os
 import secrets
 from sqlite3 import IntegrityError
 
-from flask import Flask, abort, flash, redirect, render_template, request, session, url_for
+from flask import (
+   Flask,
+   abort,
+   flash,
+   redirect,
+   render_template,
+   request,
+   session,
+   url_for
+)
+
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from db import close_db, init_db
-from categories_repository import get_experience_categories, list_categories, set_experience_categories
-from comments_repository import add_comment, list_comments
+from categories_repository import (
+    get_experience_categories,
+    list_categories,
+    set_experience_categories
+)
+from comments_repository import (
+    add_comment,
+    list_comments,
+    count_comments_by_user,
+)
 from experiences_repository import (
     count_experiences,
     count_experiences_by_user,
@@ -22,7 +40,6 @@ from experiences_repository import (
     update_experience,
 )
 from users_repository import create_user, get_user_by_username
-from comments_repository import count_comments_by_user
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret"
@@ -33,11 +50,14 @@ app.teardown_appcontext(close_db)
 init_db(app)
 
 def current_user_id():
+    """Return the ID of the currently logged-in user."""
     return session.get("user_id")
 
 def require_login():
+    """Abort with 403 if the user is not logged in."""
     if current_user_id() is None:
         abort(403)
+
 def get_csrf_token():
     """Return a CSRF token stored in session, creating one if needed."""
     token = session.get("csrf_token")
@@ -55,13 +75,16 @@ def require_csrf():
         abort(403)
 
 app.jinja_env.globals["csrf_token"] = get_csrf_token
+
 @app.route("/")
 def index():
+    """Redirect the root URL to the experience list page."""
     return redirect(url_for("experience_list"))
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    """Handle user registration."""
     if request.method == "POST":
         require_csrf()
         username = request.form.get("username", "").strip()
@@ -75,21 +98,22 @@ def register():
             create_user(username, generate_password_hash(password))
         except IntegrityError:
             flash("Käyttäjätunnus on jo käytössä.")
-        return render_template("register.html")
+            return render_template("register.html")
 
         flash("Tunnus luotu. Kirjaudu sisään.")
         return redirect(url_for("login"))
 
     return render_template("register.html")
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    """Handle user login."""
     if request.method == "POST":
         require_csrf()
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
         user = get_user_by_username(username)
- 
 
         if user is None or not check_password_hash(user["password_hash"], password):
             flash("Väärä käyttäjätunnus tai salasana.")
@@ -104,11 +128,13 @@ def login():
 
 @app.route("/logout")
 def logout():
+    """Log out the current user and clear the session."""
     session.clear()
     return redirect(url_for("login"))
 
 @app.route("/users/<username>")
 def user_page(username):
+    """Display a user's profile, experiences, and statistics."""
     user = get_user_by_username(username)
     if user is None:
         abort(404)
@@ -127,6 +153,7 @@ def user_page(username):
 
 @app.route("/experiences")
 def experience_list():
+    """Display a paginated list of experiences with optional search."""
     q = request.args.get("q", "").strip()
 
     page_str = request.args.get("page", "1").strip()
@@ -155,6 +182,7 @@ def experience_list():
 
 @app.route("/experiences/new", methods=["GET", "POST"])
 def experience_create():
+    """Handle creation of a new experience."""
     require_login()
 
     if request.method == "POST":
@@ -195,6 +223,7 @@ def experience_create():
 
 @app.route("/experiences/<int:experience_id>/edit", methods=["GET", "POST"])
 def experience_edit(experience_id):
+    """Handle editing of an existing experience."""
     require_login()
 
     exp = get_experience_by_id(experience_id)
@@ -225,14 +254,12 @@ def experience_edit(experience_id):
 
         update_experience(experience_id, course_name, content)
 
-       
         category_ids = request.form.getlist("category_ids")
         category_ids = [int(x) for x in category_ids]
         set_experience_categories(experience_id, category_ids)
 
         return redirect(url_for("experience_list"))
 
-   
     categories = list_categories()
     selected_category_ids = [
         c["id"] for c in get_experience_categories(experience_id)
@@ -249,6 +276,7 @@ def experience_edit(experience_id):
 
 @app.route("/experiences/<int:experience_id>/delete", methods=["POST"])
 def experience_delete(experience_id):
+    """Delete an experience owned by the current user."""
     require_login()
     require_csrf()
 
@@ -263,6 +291,7 @@ def experience_delete(experience_id):
 
 @app.route("/experiences/<int:experience_id>")
 def experience_detail(experience_id):
+    """Display details of a single experience."""
     exp = get_experience_detail(experience_id)
     if exp is None:
         abort(404)
@@ -279,6 +308,7 @@ def experience_detail(experience_id):
 
 @app.route("/experiences/<int:experience_id>/comment")
 def comment_form(experience_id):
+    """Display the form for adding a comment to an experience."""
     require_login()
 
     exp = get_experience_detail(experience_id)
@@ -289,6 +319,7 @@ def comment_form(experience_id):
 
 @app.route("/experiences/<int:experience_id>/comments", methods=["POST"])
 def comment_create(experience_id):
+    """Handle creation of a new comment for an experience."""
     require_login()
     require_csrf()
 
